@@ -1,8 +1,4 @@
-dist: precise # https://github.com/travis-ci/travis-ci/issues/8331
-addons:
-  apt:
-    packages:
-      - sqlite3 # https://github.com/rails/rails/issues/24288#issuecomment-206011385
+dist: trusty
 language: ruby
 sudo: false
 script: 'script/cibuild'
