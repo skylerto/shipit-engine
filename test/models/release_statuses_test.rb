@@ -5,9 +5,9 @@ module Shipit
     test "#create_status_on_github! calls GitHub API" do
       Shipit.github.api.expects(:create_status).once.with(
         'shopify/shipit-engine',
-        shipit_commits(:canaries_fourth).sha,
+        shipit_commits(:fourth).sha,
         'pending',
-        context: 'shipit/canaries',
+        context: 'shipit/production',
         target_url: 'https://example.com/deploys/42',
         description: 'Deploy started',
       ).returns(resource(id: 42))

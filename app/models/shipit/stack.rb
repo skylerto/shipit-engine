@@ -255,8 +255,8 @@ module Shipit
       scope.map.with_index { |c, i| UndeployedCommit.new(c, i) }.reverse
     end
 
-    def last_completed_deploy
-      deploys_and_rollbacks.last_completed
+    def last_successful_deploy
+      deploys_and_rollbacks.last_successful
     end
 
     def last_active_task
@@ -264,7 +264,7 @@ module Shipit
     end
 
     def last_deployed_commit
-      last_completed_deploy&.until_commit || NoDeployedCommit
+      last_successful_deploy&.until_commit || NoDeployedCommit
     end
 
     def deployable?

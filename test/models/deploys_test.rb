@@ -467,18 +467,16 @@ module Shipit
     end
 
     test "triggering a deploy sets the release status as pending" do
-      @commit = shipit_commits(:canaries_fifth)
-      @stack = @commit.stack
-
+      @commit = shipit_commits(:fifth)
       assert_difference -> { ReleaseStatus.count }, +1 do
         assert_equal 'unknown', @commit.last_release_status.state
-        @deploy = @stack.trigger_deploy(@commit, AnonymousUser.new, force: true)
+        @deploy = @stack.trigger_deploy(@commit, AnonymousUser.new)
         assert_equal 'pending', @commit.last_release_status.state
       end
     end
 
     test "failing a deploy sets the release status as error" do
-      @deploy = shipit_deploys(:canaries_running)
+      @deploy = shipit_deploys(:shipit_running)
       assert_difference -> { ReleaseStatus.count }, +1 do
         assert_not_equal 'error', @deploy.last_release_status.state
         @deploy.report_failure!(StandardError.new)
@@ -487,8 +485,8 @@ module Shipit
     end
 
     test "succeeding a deploy sets the release status as success if the status delay is 0s" do
-      @deploy = shipit_deploys(:canaries_running)
-      @deploy.stack.expects(:release_status_delay).at_least_once.returns(Duration.parse(0))
+      @deploy = shipit_deploys(:shipit_running)
+      @deploy.stack.expects(:release_status_delay).returns(Duration.parse(0))
 
       assert_difference -> { ReleaseStatus.count }, +1 do
         assert_not_equal 'success', @deploy.last_release_status.state
@@ -498,48 +496,37 @@ module Shipit
     end
 
     test "succeeding a deploy sets the release status as pending if the status delay is longer than 0s" do
-      @deploy = shipit_deploys(:canaries_running)
-      @deploy.stack.expects(:release_status_delay).at_least_once.returns(Duration.parse(1))
+      @deploy = shipit_deploys(:shipit_running)
+      @deploy.stack.expects(:release_status_delay).returns(Duration.parse(1))
 
       assert_difference -> { ReleaseStatus.count }, +1 do
         assert_not_equal 'success', @deploy.last_release_status.state
-        assert_enqueued_with(job: MarkDeployHealthyJob) do
-          @deploy.report_complete!
-          assert_equal 'validating', @deploy.status
+        assert_enqueued_with(job: AppendDelayedReleaseStatusJob) do
+          @deploy.complete!
         end
         assert_equal 'pending', @deploy.last_release_status.state
       end
     end
 
     test "triggering a rollback via abort! sets the release status as failure" do
-      @deploy = shipit_deploys(:canaries_running)
-      @deploy.ping
+      @deploy = shipit_deploys(:shipit_running)
 
-      assert_difference -> { ReleaseStatus.count }, +3 do
-        assert_equal 'running', @deploy.status
+      assert_difference -> { ReleaseStatus.count }, +2 do
         assert_not_equal 'failure', @deploy.last_release_status.state
-
         @deploy.abort!(rollback_once_aborted: true, aborted_by: shipit_users(:walrus))
-
-        @deploy.reload
-        assert_equal 'aborting', @deploy.status
-        assert_equal 'failure', @deploy.last_release_status.state
-
-        @deploy.aborted!
-
-        @deploy.reload
-        assert_equal 'aborted', @deploy.status
-        assert_equal 'failure', @deploy.last_release_status.state
+        assert_equal 'error', @deploy.reload.last_release_status.state
+        @deploy.trigger_revert
+        assert_equal 'failure', @deploy.reload.last_release_status.state
       end
     end
 
     test "manually triggered rollbacks sets the release status as failure on the previously deployed revision" do
-      @deploy = shipit_deploys(:canaries_faulty)
       last_deployed_commit = @deploy.stack.last_deployed_commit
+      @deploy = shipit_deploys(:shipit)
 
       assert_difference -> { ReleaseStatus.count }, +1 do
-        assert_not_equal 'failure', last_deployed_commit.release_statuses.last&.state
-        @deploy.trigger_rollback(force: true)
+        assert_not_equal 'failure', last_deployed_commit.release_statuses.last.state
+        @deploy.trigger_rollback
         assert_equal 'failure', last_deployed_commit.release_statuses.last.state
       end
     end
