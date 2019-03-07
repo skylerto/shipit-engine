@@ -307,6 +307,12 @@ module Shipit
       Shipit::Engine.routes.url_helpers.stack_task_url(stack, self)
     end
 
+    def show_checklist?
+      return false unless spec.review_checklist.present?
+      return true if spec.show_checklist_on.nil?
+      spec.show_checklist_on.include?(self.class.name.demodulize.downcase)
+    end
+
     private
 
     def prevent_concurrency

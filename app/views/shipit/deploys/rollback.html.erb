@@ -21,7 +21,7 @@
 
   <%= render_monitoring @stack %>
 
-  <%= render_checklist @stack.checklist %>
+  <% if @rollback.show_checklist? %> <%= render_checklist @stack.checklist %> <% end %>
 
   <%= form_for [@stack, @rollback] do |f| %>
     <%= render partial: 'shipit/variables', locals: { variables: @rollback.variables, form: f, header: "Environment Variables", field_name: :env}  %>
