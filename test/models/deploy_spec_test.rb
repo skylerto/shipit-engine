@@ -1056,5 +1056,15 @@ module Shipit
       )
       assert_nil @spec.max_divergence_age
     end
+
+    test "#show_checklist_on returns nil when undefined" do
+      @spec.expects(:load_config).returns('review' => {'checklist' => %w(foo bar)})
+      assert_nil @spec.show_checklist_on
+    end
+
+    test "#show_checklist_on returns array when set" do
+      @spec.expects(:load_config).returns('review' => {'show_checklist_on' => %w(deploys)})
+      assert_equal %w(deploys), @spec.show_checklist_on
+    end
   end
 end

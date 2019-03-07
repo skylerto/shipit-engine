@@ -219,6 +219,10 @@ module Shipit
       config('links') { {} }
     end
 
+    def show_checklist_on
+      config('review', 'show_checklist_on')
+    end
+
     private
 
     def around_steps(section)

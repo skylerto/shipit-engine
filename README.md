@@ -549,6 +549,19 @@ review:
 ```
 <br>
 
+**<code>review.show_checklist_on</code>** limits which types of task a checklist is displayed on - by default it's displayed on all types of task. Valid values are `task`, `deploy`, and `rollback`. Other values will be ignored.
+
+For example:
+
+```yml
+review:
+  checklist:
+    - I will notify the release coordinator of this rollback
+  show_checklist_on:
+    - rollback
+```
+<br>
+
 **<code>review.monitoring</code>** contains a list of inclusions that appear on the deployment page in Shipit. Inclusions can either be images or iframes.
 
 For example:
