@@ -171,9 +171,9 @@ module Shipit
       @spec ||= DeploySpec::FileSystem.new(working_directory, stack.environment)
     end
 
-    def enqueue
+    def enqueue(skip_queue: false)
       raise "only persisted jobs can be enqueued" unless persisted?
-      PerformTaskJob.perform_later(self)
+      skip_queue ? PerformTaskJob.perform_now(self) : PerformTaskJob.perform_later(self)
     end
 
     def write(text)
